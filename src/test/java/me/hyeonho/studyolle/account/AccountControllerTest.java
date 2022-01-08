@@ -23,7 +23,8 @@ class AccountControllerTest {
         mockMvc.perform(get("/sign-up"))
                 .andDo(print()) // console 에 출력
                 .andExpect(status().isOk()) // status = 200 인지 check
-                .andExpect(view().name("account/sign-up")); // view 이름
+                .andExpect(view().name("account/sign-up")) // view 이름
+                .andExpect(model().attributeExists("signUpForm"));
     }
 
 }
