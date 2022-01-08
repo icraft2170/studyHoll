@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -23,6 +24,8 @@ public class Account {
 
     @Column(unique = true)
     private String nickname;
+
+    private String password;
 
     //이메일 인증 여부
     private boolean emailVerified;
@@ -59,4 +62,7 @@ public class Account {
     // 스터디 업데이트 알림
     private boolean studyUpdatedByWeb;
 
+    public void generateEmailCheckToken() {
+        this.emailCheckToken = UUID.randomUUID().toString();
+    }
 }
