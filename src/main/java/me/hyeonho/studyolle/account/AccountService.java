@@ -4,9 +4,15 @@ import lombok.RequiredArgsConstructor;
 import me.hyeonho.studyolle.domain.Account;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -16,10 +22,11 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public void processNewAccount(SignUpForm signUpForm) {
+    public Account processNewAccount(SignUpForm signUpForm) {
         Account newAccount = saveNewAccount(signUpForm);
         newAccount.generateEmailCheckToken();
         sendSignUpConfirmEmail(newAccount);
+        return newAccount;
     }
 
 
@@ -43,4 +50,13 @@ public class AccountService {
     }
 
 
+    public void login(Account account) {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
+                account.getNickname()
+                , account.getPassword()
+                , List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+        SecurityContext context = SecurityContextHolder.getContext();
+        context.setAuthentication(token);
+    }
 }
