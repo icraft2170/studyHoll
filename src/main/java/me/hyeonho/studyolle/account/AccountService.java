@@ -24,11 +24,9 @@ public class AccountService {
     @Transactional
     public Account processNewAccount(SignUpForm signUpForm) {
         Account newAccount = saveNewAccount(signUpForm);
-        newAccount.generateEmailCheckToken();
         sendSignUpConfirmEmail(newAccount);
         return newAccount;
     }
-
 
     private Account saveNewAccount(SignUpForm signUpForm) {
         String rawPassword = signUpForm.getPassword();
@@ -36,7 +34,9 @@ public class AccountService {
         return accountRepository.save(signUpForm.toEntity());
     }
 
-    private void sendSignUpConfirmEmail(Account account) {
+    @Transactional
+    public void sendSignUpConfirmEmail(Account account) {
+        account.generateEmailCheckToken();
         javaMailSender.send(createMaileMessage(account));
     }
 
@@ -49,10 +49,9 @@ public class AccountService {
         return mailMessage;
     }
 
-
     public void login(Account account) {
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-                account.getNickname()
+                new UserAccount(account)
                 , account.getPassword()
                 , List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
