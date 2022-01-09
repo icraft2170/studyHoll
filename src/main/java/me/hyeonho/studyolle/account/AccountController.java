@@ -40,7 +40,7 @@ public class AccountController {
     }
 
     @GetMapping("/check-email-token")
-    public String checkEmailToken(String token, String email, Model model){
+    public String checkEmailToken(String token, String email, Model model) {
         String view = "account/checked-email";
         Account account = accountRepository.findByEmail(email);
 
@@ -49,34 +49,46 @@ public class AccountController {
             return view;
         }
 
-        if (!account.isValidToken(token)){
+        if (!account.isValidToken(token)) {
             model.addAttribute("error", "wrong.token");
             return view;
         }
 
 
-        account.completeSignUp();
-        accountService.login(account);
+        accountService.completeSignUp(account);
+
         model.addAttribute("numberOfUser", accountRepository.count());
         model.addAttribute("nickname", account.getNickname());
         return view;
     }
 
     @GetMapping("/check-email")
-    public String checkEmail(@CurrentUser Account account, Model model){
+    public String checkEmail(@CurrentUser Account account, Model model) {
         model.addAttribute("email", account.getEmail());
         return "account/check-email";
     }
 
     @GetMapping("/resend-confirm-email")
-    public String resendEmailConfirm(@CurrentUser Account account,Model model){
-        if(!account.canSendConfirmEmail()){
+    public String resendEmailConfirm(@CurrentUser Account account, Model model) {
+        if (!account.canSendConfirmEmail()) {
             model.addAttribute("error", "이메일은 한 시간에 한 번 전송할 수 있습니다.");
-            model.addAttribute("email",account.getEmail());
+            model.addAttribute("email", account.getEmail());
             return "account/check-email";
         }
 
         accountService.sendSignUpConfirmEmail(account);
         return "redirect:/";
+    }
+
+    @GetMapping("/profile/{nickname}")
+    public String viewProfile(@PathVariable String nickname, Model model, @CurrentUser Account account) {
+        Account byNickname = accountRepository.findByNickname(nickname);
+        if(byNickname == null){
+            throw new IllegalArgumentException(nickname + "에 해당하는 사용자가 없습니다.");
+        }
+
+        model.addAttribute(byNickname);
+        model.addAttribute("isOwner", byNickname.equals(account));
+        return "account/profile";
     }
 }
