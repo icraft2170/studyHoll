@@ -56,15 +56,16 @@ public class Account {
     // 스터디 생성 알림 메일 여부
     private boolean studyCreatedByEmail;
     // 스터디 생성 알림 웹 여부
-    private boolean studyCreatedByWeb;
+    private boolean studyCreatedByWeb = true;
     // 스터디 가입 결과 알림 이메일
     private boolean studyEnrollmentResultByEmail;
     // 스터디 가입 결과 알림 웹
-    private boolean studyEnrollmentResultByWeb;
+    private boolean studyEnrollmentResultByWeb = true;
     // 스터디 업데이트 알림 이메일
     private boolean studyUpdatedByEmail;
     // 스터디 업데이트 알림
-    private boolean studyUpdatedByWeb;
+    private boolean studyUpdatedByWeb = true;
+
 
     public void generateEmailCheckToken() {
         this.emailCheckToken = UUID.randomUUID().toString();

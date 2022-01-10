@@ -2,6 +2,10 @@ package me.hyeonho.studyolle.account;
 
 import lombok.RequiredArgsConstructor;
 import me.hyeonho.studyolle.domain.Account;
+import me.hyeonho.studyolle.settings.form.NicknameForm;
+import me.hyeonho.studyolle.settings.form.Notifications;
+import me.hyeonho.studyolle.settings.form.Profile;
+import org.modelmapper.ModelMapper;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,6 +28,7 @@ public class AccountService implements UserDetailsService {
     private final AccountRepository accountRepository;
     private final JavaMailSender javaMailSender;
     private final PasswordEncoder passwordEncoder;
+    private final ModelMapper modelMapper;
 
     public Account processNewAccount(SignUpForm signUpForm) {
         Account newAccount = saveNewAccount(signUpForm);
@@ -78,5 +83,37 @@ public class AccountService implements UserDetailsService {
     public void completeSignUp(Account account) {
         account.completeSignUp();
         login(account);
+    }
+
+    public void updateProfile(Account account, Profile profile) {
+        modelMapper.map(profile,account);
+        accountRepository.save(account);
+    }
+
+    public void updatePassword(Account account, String newPassword) {
+        Account findAccount = accountRepository.findByNickname(account.getNickname());
+        findAccount.setPassword(passwordEncoder.encode(newPassword));
+    }
+
+    public void updateNotification(Account account, Notifications notifications) {
+        modelMapper.map(notifications, account);
+        accountRepository.save(account);
+    }
+
+    public void updateAccount(Account account, NicknameForm nickNameForm) {
+        modelMapper.map(nickNameForm,account);
+        accountRepository.save(account);
+        login(account);
+    }
+
+
+    public void sendLoginLink(Account account) {
+        account.generateEmailCheckToken();
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(account.getEmail());
+        mailMessage.setSubject("스터디올래, 로그인 링크");
+        mailMessage.setText("/login-by-email?token=" + account.getEmailCheckToken() +
+                "&email=" + account.getEmail());
+        javaMailSender.send(mailMessage);
     }
 }
