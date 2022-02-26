@@ -5,12 +5,18 @@
   <head th:fragment="head">
     <meta charset="UTF-8">
     <title>StudyOlle</title>
+    <link rel="stylesheet" href="/node_modules/@yaireo/tagify/dist/tagify.css">
     <link rel="stylesheet" th:href="@{/node_modules/bootstrap/dist/css/bootstrap.min.css}" href="/static/node_modules/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/static/node_modules/font-awesome/css/font-awesome.min.css" th:href="@{/node_modules/font-awesome/css/font-awesome.min.css}" />
     <script defer src="/static/node_modules/jdenticon/dist/jdenticon.min.js" th:src="@{/node_modules/jdenticon/dist/jdenticon.min.js}"></script>
     <style>
       .container {
         max-width: 100%;
+      }
+      .tagify-outside{
+        border: 0;
+        padding: 0;
+        margin: 0;
       }
     </style>
   </head>

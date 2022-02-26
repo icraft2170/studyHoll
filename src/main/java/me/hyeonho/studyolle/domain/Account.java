@@ -1,11 +1,11 @@
 package me.hyeonho.studyolle.domain;
 
 import lombok.*;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -65,6 +65,9 @@ public class Account {
     private boolean studyUpdatedByEmail;
     // 스터디 업데이트 알림
     private boolean studyUpdatedByWeb = true;
+
+    @ManyToMany
+    private Set<Tag> tags = new HashSet<>();
 
 
     public void generateEmailCheckToken() {

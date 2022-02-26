@@ -2,6 +2,7 @@ package me.hyeonho.studyolle.account;
 
 import lombok.RequiredArgsConstructor;
 import me.hyeonho.studyolle.domain.Account;
+import me.hyeonho.studyolle.domain.Tag;
 import me.hyeonho.studyolle.settings.form.NicknameForm;
 import me.hyeonho.studyolle.settings.form.Notifications;
 import me.hyeonho.studyolle.settings.form.Profile;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -37,9 +40,10 @@ public class AccountService implements UserDetailsService {
     }
 
     private Account saveNewAccount(SignUpForm signUpForm) {
-        String rawPassword = signUpForm.getPassword();
-        signUpForm.setPassword(passwordEncoder.encode(rawPassword));
-        return accountRepository.save(signUpForm.toEntity());
+        signUpForm.setPassword(passwordEncoder.encode(signUpForm.getPassword()));
+        Account account = modelMapper.map(signUpForm, Account.class);
+        account.generateEmailCheckToken();
+        return account;
     }
 
     public void sendSignUpConfirmEmail(Account account) {
@@ -115,5 +119,20 @@ public class AccountService implements UserDetailsService {
         mailMessage.setText("/login-by-email?token=" + account.getEmailCheckToken() +
                 "&email=" + account.getEmail());
         javaMailSender.send(mailMessage);
+    }
+
+    public void addTag(Account account, Tag tag) {
+        Optional<Account> byId = accountRepository.findById(account.getId());
+        byId.ifPresent(a -> a.getTags().add(tag));
+    }
+
+    public Set<Tag> getTags(Account account) {
+        Optional<Account> byId = accountRepository.findById(account.getId());
+        return byId.orElseThrow().getTags();
+    }
+
+    public void removeTag(Account account, Tag tag) {
+        Optional<Account> byId = accountRepository.findById(account.getId());
+        byId.ifPresent(a -> a.getTags().remove(tag));
     }
 }

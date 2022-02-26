@@ -1,24 +1,33 @@
 package me.hyeonho.studyolle.settings.form;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import me.hyeonho.studyolle.account.AccountRepository;
 import me.hyeonho.studyolle.account.AccountService;
 import me.hyeonho.studyolle.account.CurrentUser;
 import me.hyeonho.studyolle.domain.Account;
+import me.hyeonho.studyolle.domain.Tag;
 import me.hyeonho.studyolle.settings.validatior.NicknameValidator;
 import me.hyeonho.studyolle.settings.validatior.PasswordFormValidator;
+import me.hyeonho.studyolle.tag.TagRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 @Controller
 @RequiredArgsConstructor
@@ -32,11 +41,17 @@ public class SettingsController {
     static final String SETTINGS_ACCOUNT_VIEW_NAME = "settings/account";
     static final String SETTINGS_ACCOUNT_URL = "/settings/account";
 
+    static final String SETTINGS_TAG_VIEW_NAME = "settings/tags";
+    static final String SETTINGS_TAG_URL = "/settings/tags";
+
+
 
     private final AccountRepository accountRepository;
     private final AccountService accountService;
     private final ModelMapper modelMapper;
     private final NicknameValidator nicknameValidator;
+    private final TagRepository tagRepository;
+    private final ObjectMapper objectMapper;
 
     @InitBinder("passwordForm")
     public void passwordFormInitBinder(WebDataBinder webDataBinder) {
@@ -47,6 +62,55 @@ public class SettingsController {
     public void nicknameFormInitBinder(WebDataBinder webDataBinder) {
         webDataBinder.addValidators(nicknameValidator);
     }
+
+
+    @GetMapping(SETTINGS_TAG_URL)
+    public String updateTags(@CurrentUser Account account, Model model) throws JsonProcessingException {
+        model.addAttribute(account);
+        Set<Tag> tags = accountService.getTags(account);
+        model.addAttribute("tags", tags.stream().map(Tag::getTitle).collect(toList()));
+
+        List<String> allTags = tagRepository.findAll().stream()
+                .map(Tag::getTitle).collect(toList());
+        model.addAttribute("whitelist", objectMapper.writeValueAsString(allTags));
+
+
+        return SETTINGS_TAG_VIEW_NAME;
+    }
+
+    @PostMapping(SETTINGS_TAG_URL + "/add")
+    @ResponseBody
+    public ResponseEntity addTag(@CurrentUser Account account, @RequestBody TagForm tagForm, Model model) {
+        String title = tagForm.getTagTitle();
+        Tag tag = tagRepository.findByTitle(title).orElseGet(
+                ()-> tagRepository.save(Tag.builder()
+                            .title(tagForm.getTagTitle())
+                            .build()));
+
+        accountService.addTag(account,tag);
+        model.addAttribute(account);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(SETTINGS_TAG_URL + "/remove")
+    @ResponseBody
+    public ResponseEntity removeTag(@CurrentUser Account account, @RequestBody TagForm tagForm, Model model) {
+        String title = tagForm.getTagTitle();
+        Optional<Tag> tag = tagRepository.findByTitle(title);
+        if (tag.isEmpty()){
+            return ResponseEntity.badRequest().build();
+        }
+        accountService.removeTag(account,tag.get());
+        return ResponseEntity.ok().build();
+    }
+
+
+
+
+
+
+
+
 
     @GetMapping(SETTINGS_PROFILE_URL)
     public String updateProfileForm(@CurrentUser Account account, Model model) {
